@@ -1,4 +1,16 @@
-# Running the code:
+# freeGPT-discord-bot
+
+This is the official freeGPT discord bot.
+
+## Support this repository:
+
+- Star this repository :D
+- Add the [freeGPT Discord bot](https://dsc.gg/freegpt).
+- Join my [Discord Server](https://discord.gg/XH6pUGkwRr):
+
+[![DiscordWidget](https://discordapp.com/api/guilds/1120833966035976273/widget.png?style=banner2)](https://discord.gg/XH6pUGkwRr)
+
+## Running the code:
 ##### 1. Download the code and extract it, and create a discord account if you still haven't.
 ##### 2. Make sure you have Python installed on your computer. If its not installed [Download Python here](https://www.python.org/downloads/).
 ##### 3. Install the required dependencies:
