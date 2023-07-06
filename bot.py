@@ -58,23 +58,24 @@ async def help(interaction):
         value="Usage: `/setup {model}`",
     )
     embed.add_field(name="reset", value="Usage: `/reset`")
+    embed.set_footer(text="Powered by https://github.com/Ruu3f/freeGPT")
     view = discord.ui.View()
     view.add_item(
         discord.ui.Button(
-            label="Invite me",
+            label="Invite Me",
             url="https://dsc.gg/freeGPT",
         )
     )
     view.add_item(
         discord.ui.Button(
-            label="Discord Server",
+            label="Server",
             url="https://discord.gg/XH6pUGkwRr",
         )
     )
     view.add_item(
         discord.ui.Button(
             label="Source Code",
-            url="https://github.com/Ruu3f/freeGPT",
+            url="https://github.com/Ruu3f/freeGPT-discord-bot",
         )
     )
     await interaction.response.send_message(embed=embed, view=view)
