@@ -22,6 +22,7 @@ async def on_ready():
     """
     Performs necessary actions when the bot is ready.
     """
+    global db
     db = await aiosqlite.connect("database.db")
     async with db.cursor() as cursor:
         await cursor.execute(
