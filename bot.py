@@ -175,8 +175,8 @@ async def on_message(message):
                         prompt=message.content
                     )
                     await message.reply(resp)
-                except Exception:
-                    await message.reply(Exception)
+                except Exception as e:
+                    await message.reply(e)
 
 
 TOKEN = ""
