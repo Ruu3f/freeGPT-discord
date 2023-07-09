@@ -1,10 +1,10 @@
+import io
 import asyncio
-import discord
 import freeGPT
+import discord
 import aiosqlite
 from discord.ext import commands
 from discord import app_commands
-
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -19,16 +19,12 @@ db = None
 
 @bot.event
 async def on_ready():
-    """
-    Performs necessary actions when the bot is ready.
-    """
     global db
     db = await aiosqlite.connect("database.db")
     async with db.cursor() as cursor:
         await cursor.execute(
-            "CREATE TABLE IF NOT EXISTS datastorage(guilds INTEGER, channels INTEGER, model TEXT)"
+            "CREATE TABLE IF NOT EXISTS database(guilds INTEGER, channels INTEGER, model TEXT)"
         )
-    await db.commit()
     print(f"{bot.user.name} connected to Discord.")
     sync_commands = await bot.tree.sync()
     print(f"Synced {len(sync_commands)} command(s).")
@@ -45,9 +41,6 @@ async def on_ready():
 
 @bot.tree.command(name="help", description="Get help.")
 async def help(interaction):
-    """
-    Sends an embed with bot information.
-    """
     embed = discord.Embed(
         title="Help Menu",
         description=f"Available models: `{', '.join(models)}`",
@@ -86,9 +79,6 @@ async def help(interaction):
 @app_commands.checks.bot_has_permissions(manage_channels=True)
 @app_commands.describe(model=f"Model to use. Choose between {', '.join(models)}")
 async def setup(interaction, model: str):
-    """
-    Set up the chatbot.
-    """
     if model.lower() not in models:
         await interaction.response.send_message(
             f"**Error:** Model not found! Choose a model between `{', '.join(models)}`."
@@ -96,7 +86,7 @@ async def setup(interaction, model: str):
         return
 
     cursor = await db.execute(
-        "SELECT channels, model FROM datastorage WHERE guilds = ?",
+        "SELECT channels, model FROM database WHERE guilds = ?",
         (interaction.guild.id,),
     )
     data = await cursor.fetchone()
@@ -112,7 +102,7 @@ async def setup(interaction, model: str):
         )
 
         await db.execute(
-            "INSERT OR REPLACE INTO datastorage (guilds, channels, model) VALUES (?, ?, ?)",
+            "INSERT OR REPLACE INTO database (guilds, channels, model) VALUES (?, ?, ?)",
             (
                 interaction.guild.id,
                 channel.id,
@@ -132,11 +122,8 @@ async def setup(interaction, model: str):
 @bot.tree.command(name="reset", description="Reset the chatbot.")
 @app_commands.checks.has_permissions(manage_channels=True)
 async def reset(interaction):
-    """
-    Resets the chatbot.
-    """
     cursor = await db.execute(
-        "SELECT channels, model FROM datastorage WHERE guilds = ?",
+        "SELECT channels, model FROM database WHERE guilds = ?",
         (interaction.guild.id,),
     )
     data = await cursor.fetchone()
@@ -146,23 +133,18 @@ async def reset(interaction):
         )
         return
 
-    await db.execute(
-        "DELETE FROM datastorage WHERE guilds = ?", (interaction.guild.id,)
-    )
+    await db.execute("DELETE FROM database WHERE guilds = ?", (interaction.guild.id,))
     await db.commit()
     await interaction.response.send_message("**Success:** The chatbot has been reset.")
 
 
 @bot.event
 async def on_message(message):
-    """
-    Reply to the message if the bot is set up.
-    """
     if message.author == bot.user:
         return
 
     cursor = await db.execute(
-        "SELECT channels, model FROM datastorage WHERE guilds = ?", (message.guild.id,)
+        "SELECT channels, model FROM database WHERE guilds = ?", (message.guild.id,)
     )
     data = await cursor.fetchone()
     if data:
@@ -174,7 +156,15 @@ async def on_message(message):
                     resp = await getattr(freeGPT, model.lower()).Completion.create(
                         prompt=message.content
                     )
-                    await message.reply(resp)
+
+                    if len(resp) <= 2000:
+                        await message.reply(resp)
+                    else:
+                        resp = discord.File(
+                            fp=io.BytesIO(resp.encode("utf-8")), filename="resp.txt"
+                        )
+                        await message.reply(file=resp)
+
                 except Exception as e:
                     await message.reply(e)
 
