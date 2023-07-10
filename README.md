@@ -4,7 +4,7 @@ A Discord chatbot powered by freeGPT.
 
 ## Support this repository:
 
-- Star this repository :D
+- Star this & [the original](https://github.com/Ruu3f/freeGPT) repository :D
 - Add the [freeGPT Discord bot](https://dsc.gg/freegpt).
 - Join my [Discord Server](https://discord.gg/XH6pUGkwRr):
 
