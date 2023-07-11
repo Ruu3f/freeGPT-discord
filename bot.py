@@ -1,18 +1,14 @@
-import io
 import asyncio
 import freeGPT
-import discord
 import aiosqlite
+from io import BytesIO
 from discord.ext import commands
-from discord import app_commands
+from discord.ui import Button, View
+from discord import app_commands, Intents, Embed, File, Status, Activity, ActivityType
 
-intents = discord.Intents.default()
+intents = Intents.default()
 intents.message_content = True
-
-bot = commands.Bot(
-    command_prefix="i don't want to set one...", intents=intents, help_command=None
-)
-
+bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 models = ["gpt3", "gpt4", "alpaca_7b"]
 db = None
 
@@ -30,9 +26,9 @@ async def on_ready():
     print(f"Synced {len(sync_commands)} command(s).")
     while True:
         await bot.change_presence(
-            status=discord.Status.online,
-            activity=discord.Activity(
-                type=discord.ActivityType.watching,
+            status=Status.online,
+            activity=Activity(
+                type=ActivityType.watching,
                 name=f"{len(bot.guilds)} servers | /help",
             ),
         )
@@ -41,7 +37,7 @@ async def on_ready():
 
 @bot.tree.command(name="help", description="Get help.")
 async def help(interaction):
-    embed = discord.Embed(
+    embed = Embed(
         title="Help Menu",
         description=f"Available models: `{', '.join(models)}`",
         color=0x00FFFF,
@@ -51,23 +47,23 @@ async def help(interaction):
         value="Usage: `/setup {model}`",
     )
     embed.add_field(name="reset", value="Usage: `/reset`")
-    embed.set_footer(text="Powered by https://github.com/Ruu3f/freeGPT")
-    view = discord.ui.View()
+    embed.set_footer(text="Powered by github.com/Ruu3f/freeGPT")
+    view = View()
     view.add_item(
-        discord.ui.Button(
-            label="Invite Me",
+        Button(
+            label="Invite",
             url="https://dsc.gg/freeGPT",
         )
     )
     view.add_item(
-        discord.ui.Button(
+        Button(
             label="Server",
             url="https://discord.gg/XH6pUGkwRr",
         )
     )
     view.add_item(
-        discord.ui.Button(
-            label="Source Code",
+        Button(
+            label="Source",
             url="https://github.com/Ruu3f/freeGPT-discord-bot",
         )
     )
@@ -142,31 +138,30 @@ async def reset(interaction):
 async def on_message(message):
     if message.author == bot.user:
         return
-
-    cursor = await db.execute(
-        "SELECT channels, model FROM database WHERE guilds = ?", (message.guild.id,)
-    )
-    data = await cursor.fetchone()
-    if data:
-        channel_id, model = data
-        if message.channel.id == channel_id:
-            await message.channel.edit(slowmode_delay=10)
-            async with message.channel.typing():
-                try:
-                    resp = await getattr(freeGPT, model.lower()).Completion.create(
-                        prompt=message.content
-                    )
-
-                    if len(resp) <= 2000:
-                        await message.reply(resp)
-                    else:
-                        resp = discord.File(
-                            fp=io.BytesIO(resp.encode("utf-8")), filename="resp.txt"
+    if db:
+        cursor = await db.execute(
+            "SELECT channels, model FROM database WHERE guilds = ?", (message.guild.id,)
+        )
+        data = await cursor.fetchone()
+        if data:
+            channel_id, model = data
+            if message.channel.id == channel_id:
+                await message.channel.edit(slowmode_delay=10)
+                async with message.channel.typing():
+                    try:
+                        resp = await getattr(freeGPT, model.lower()).Completion.create(
+                            prompt=message.content
                         )
-                        await message.reply(file=resp)
+                        if len(resp) <= 2000:
+                            await message.reply(resp)
+                        else:
+                            resp = File(
+                                fp=BytesIO(resp.encode("utf-8")), filename="resp.txt"
+                            )
+                            await message.reply(file=resp)
 
-                except Exception as e:
-                    await message.reply(e)
+                    except Exception as e:
+                        await message.reply(str(e))
 
 
 TOKEN = ""
