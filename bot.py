@@ -15,15 +15,16 @@ db = None
 
 @bot.event
 async def on_ready():
+    print(f"\033[1;94m INFO \033[0m| {bot.user.name} has connected to Discord.")
     global db
     db = await aiosqlite.connect("database.db")
     async with db.cursor() as cursor:
         await cursor.execute(
-            "CREATE TABLE IF NOT EXISTS database(guilds INTEGER, channels INTEGER, model TEXT)"
+            "CREATE TABLE IF NOT EXISTS database(guilds INTEGER, channels INTEGER, models TEXT)"
         )
-    print(f"{bot.user.name} connected to Discord.")
+    print("\033[1;94m INFO \033[0m| Database connection successful.")
     sync_commands = await bot.tree.sync()
-    print(f"Synced {len(sync_commands)} command(s).")
+    print(f"\033[1;94m INFO \033[0m| Synced {len(sync_commands)} command(s).")
     while True:
         await bot.change_presence(
             status=Status.online,
@@ -115,23 +116,54 @@ async def setup(interaction, model: str):
         )
 
 
+@setup.error
+async def setup_err(interaction, err):
+    if isinstance(err, app_commands.errors.BotMissingPermissions):
+        await interaction.response.send_message(
+            "**Error:** I don't have the required permission to use this command."
+        )
+    elif isinstance(err, app_commands.errors.MissingPermissions):
+        await interaction.response.send_message(
+            "**Error:** You don't have the required permission to use this command."
+        )
+
+
 @bot.tree.command(name="reset", description="Reset the chatbot.")
 @app_commands.checks.has_permissions(manage_channels=True)
+@app_commands.checks.bot_has_permissions(manage_channels=True)
 async def reset(interaction):
     cursor = await db.execute(
         "SELECT channels, model FROM database WHERE guilds = ?",
         (interaction.guild.id,),
     )
     data = await cursor.fetchone()
-    if not data:
+    if data:
+        channel = await bot.fetch_channel(data[0])
+        await channel.delete()
+        await db.execute(
+            "DELETE FROM database WHERE guilds = ?", (interaction.guild.id,)
+        )
+        await db.commit()
+        await interaction.response.send_message(
+            "**Success:** The chatbot has been reset."
+        )
+
+    else:
         await interaction.response.send_message(
             "**Error:** The chatbot is not set up. Use the `/setup` command to fix this error."
         )
-        return
 
-    await db.execute("DELETE FROM database WHERE guilds = ?", (interaction.guild.id,))
-    await db.commit()
-    await interaction.response.send_message("**Success:** The chatbot has been reset.")
+
+@reset.error
+async def reset_err(interaction, err):
+    if isinstance(err, app_commands.errors.BotMissingPermissions):
+        await interaction.response.send_message(
+            "**Error:** I don't have the required permission to use this command."
+        )
+    elif isinstance(err, app_commands.errors.MissingPermissions):
+        await interaction.response.send_message(
+            "**Error:** You don't have the required permission to use this command."
+        )
 
 
 @bot.event
@@ -162,6 +194,12 @@ async def on_message(message):
 
                     except Exception as e:
                         await message.reply(str(e))
+
+
+@bot.event
+async def on_guild_remove(guild):
+    await db.execute("DELETE FROM database WHERE guilds = ?", (guild.id,))
+    await db.commit()
 
 
 TOKEN = ""
