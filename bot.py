@@ -83,7 +83,7 @@ async def setup(interaction, model: str):
         return
 
     cursor = await db.execute(
-        "SELECT channels, model FROM database WHERE guilds = ?",
+        "SELECT channels, models FROM database WHERE guilds = ?",
         (interaction.guild.id,),
     )
     data = await cursor.fetchone()
@@ -99,7 +99,7 @@ async def setup(interaction, model: str):
         )
 
         await db.execute(
-            "INSERT OR REPLACE INTO database (guilds, channels, model) VALUES (?, ?, ?)",
+            "INSERT OR REPLACE INTO database (guilds, channels, models) VALUES (?, ?, ?)",
             (
                 interaction.guild.id,
                 channel.id,
@@ -133,7 +133,7 @@ async def setup_err(interaction, err):
 @app_commands.checks.bot_has_permissions(manage_channels=True)
 async def reset(interaction):
     cursor = await db.execute(
-        "SELECT channels, model FROM database WHERE guilds = ?",
+        "SELECT channels, models FROM database WHERE guilds = ?",
         (interaction.guild.id,),
     )
     data = await cursor.fetchone()
@@ -172,7 +172,7 @@ async def on_message(message):
         return
     if db:
         cursor = await db.execute(
-            "SELECT channels, model FROM database WHERE guilds = ?", (message.guild.id,)
+            "SELECT channels, models FROM database WHERE guilds = ?", (message.guild.id,)
         )
         data = await cursor.fetchone()
         if data:
