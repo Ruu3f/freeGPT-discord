@@ -71,6 +71,28 @@ async def help(interaction):
     await interaction.response.send_message(embed=embed, view=view)
 
 
+@bot.tree.command(name="ask", description="Ask a model a question.")
+@app_commands.describe(model=f"Model to use. Choose between {', '.join(models)}")
+@app_commands.describe(prompt="Your prompt.")
+async def ask(interaction, model: str, prompt: str):
+    if model.lower() not in models:
+        await interaction.response.send_message(
+            f"**Error:** Model not found! Choose a model between `{', '.join(models)}`."
+        )
+        return
+    try:
+        await interaction.response.defer()
+        resp = await getattr(freeGPT, model.lower()).Completion.create(prompt=prompt)
+        if len(resp) <= 2000:
+            await interaction.followup.send(resp)
+        else:
+            file = File(fp=BytesIO(resp.encode("utf-8")), filename="message.txt")
+            await interaction.followup.send(file=file)
+
+    except Exception as e:
+        await interaction.followup.send(str(e))
+
+
 @bot.tree.command(name="setup", description="Setup the chatbot.")
 @app_commands.checks.has_permissions(manage_channels=True)
 @app_commands.checks.bot_has_permissions(manage_channels=True)
@@ -95,7 +117,7 @@ async def setup(interaction, model: str):
 
     if model.lower() in models:
         channel = await interaction.guild.create_text_channel(
-            f"{model}-chat", slowmode_delay=10
+            "freegpt-chat", slowmode_delay=15
         )
 
         await db.execute(
@@ -172,7 +194,8 @@ async def on_message(message):
         return
     if db:
         cursor = await db.execute(
-            "SELECT channels, models FROM database WHERE guilds = ?", (message.guild.id,)
+            "SELECT channels, models FROM database WHERE guilds = ?",
+            (message.guild.id,),
         )
         data = await cursor.fetchone()
         if data:
