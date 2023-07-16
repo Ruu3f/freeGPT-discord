@@ -9,8 +9,9 @@ from discord import app_commands, Intents, Embed, File, Status, Activity, Activi
 intents = Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
-models = ["gpt3", "gpt4", "alpaca_7b"]
 db = None
+textGenModels = ["gpt3", "gpt4", "alpaca_7b"]
+imageGenModels = ["prodia"]
 
 
 @bot.event
@@ -40,7 +41,7 @@ async def on_ready():
 async def help(interaction):
     embed = Embed(
         title="Help Menu",
-        description=f"Available models: `{', '.join(models)}`",
+        description=f"Available models: `{', '.join(textGenModels)}`",
         color=0x00FFFF,
     )
     embed.add_field(
@@ -71,13 +72,34 @@ async def help(interaction):
     await interaction.response.send_message(embed=embed, view=view)
 
 
+@bot.tree.command(name="imagine", description="Generate a image based on a prompt.")
+@app_commands.describe(
+    model=f"Model to use. Choose between {', '.join(imageGenModels)}"
+)
+@app_commands.describe(prompt="Your prompt.")
+async def imagine(interaction, model: str, prompt: str):
+    if model.lower() not in imageGenModels:
+        await interaction.response.send_message(
+            f"**Error:** Model not found! Choose a model between `{', '.join(imageGenModels)}`."
+        )
+        return
+    try:
+        await interaction.response.defer()
+        resp = await getattr(freeGPT, model.lower()).Generation.create(prompt=prompt)
+        file = File(fp=resp, filename="image.png")
+        await interaction.followup.send(file=file)
+
+    except Exception as e:
+        await interaction.followup.send(str(e))
+
+
 @bot.tree.command(name="ask", description="Ask a model a question.")
-@app_commands.describe(model=f"Model to use. Choose between {', '.join(models)}")
+@app_commands.describe(model=f"Model to use. Choose between {', '.join(textGenModels)}")
 @app_commands.describe(prompt="Your prompt.")
 async def ask(interaction, model: str, prompt: str):
-    if model.lower() not in models:
+    if model.lower() not in textGenModels:
         await interaction.response.send_message(
-            f"**Error:** Model not found! Choose a model between `{', '.join(models)}`."
+            f"**Error:** Model not found! Choose a model between `{', '.join(textGenModels)}`."
         )
         return
     try:
@@ -96,11 +118,11 @@ async def ask(interaction, model: str, prompt: str):
 @bot.tree.command(name="setup", description="Setup the chatbot.")
 @app_commands.checks.has_permissions(manage_channels=True)
 @app_commands.checks.bot_has_permissions(manage_channels=True)
-@app_commands.describe(model=f"Model to use. Choose between {', '.join(models)}")
+@app_commands.describe(model=f"Model to use. Choose between {', '.join(textGenModels)}")
 async def setup(interaction, model: str):
-    if model.lower() not in models:
+    if model.lower() not in textGenModels:
         await interaction.response.send_message(
-            f"**Error:** Model not found! Choose a model between `{', '.join(models)}`."
+            f"**Error:** Model not found! Choose a model between `{', '.join(textGenModels)}`."
         )
         return
 
@@ -115,7 +137,7 @@ async def setup(interaction, model: str):
         )
         return
 
-    if model.lower() in models:
+    if model.lower() in textGenModels:
         channel = await interaction.guild.create_text_channel(
             "freegpt-chat", slowmode_delay=15
         )
@@ -134,7 +156,7 @@ async def setup(interaction, model: str):
         )
     else:
         await interaction.response.send_message(
-            f"**Error:** Model not found! Choose a model between `{', '.join(models)}`."
+            f"**Error:** Model not found! Choose a model between `{', '.join(textGenModels)}`."
         )
 
 
