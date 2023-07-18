@@ -223,7 +223,7 @@ async def on_message(message):
         if data:
             channel_id, model = data
             if message.channel.id == channel_id:
-                await message.channel.edit(slowmode_delay=10)
+                await message.channel.edit(slowmode_delay=15)
                 async with message.channel.typing():
                     try:
                         resp = await getattr(freeGPT, model.lower()).Completion.create(
