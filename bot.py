@@ -1,7 +1,7 @@
-import asyncio
 import freeGPT
 import aiosqlite
 from io import BytesIO
+from asyncio import sleep, run
 from discord.ext import commands
 from discord.ui import Button, View
 from discord import app_commands, Intents, Embed, File, Status, Activity, ActivityType
@@ -34,7 +34,7 @@ async def on_ready():
                 name=f"{len(bot.guilds)} servers | /help",
             ),
         )
-        await asyncio.sleep(300)
+        await sleep(300)
 
 
 @bot.tree.command(name="help", description="Get help.")
@@ -233,7 +233,7 @@ async def on_message(message):
                             await message.reply(resp)
                         else:
                             resp = File(
-                                fp=BytesIO(resp.encode("utf-8")), filename="resp.txt"
+                                fp=BytesIO(resp.encode("utf-8")), filename="message.txt"
                             )
                             await message.reply(file=resp)
 
@@ -248,4 +248,4 @@ async def on_guild_remove(guild):
 
 
 TOKEN = ""
-asyncio.run(bot.run(TOKEN))
+run(bot.run(TOKEN))
