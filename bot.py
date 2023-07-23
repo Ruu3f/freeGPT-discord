@@ -1,14 +1,15 @@
 import freeGPT
-import aiosqlite
 from io import BytesIO
+from aiosqlite import connect
 from asyncio import sleep, run
-from discord.ext import commands
 from discord.ui import Button, View
-from discord import app_commands, Intents, Embed, File, Status, Activity, ActivityType
+from discord.ext.commands import Bot
+from discord.app_commands import describe, checks, errors
+from discord import Intents, Embed, File, Status, Activity, ActivityType
 
 intents = Intents.default()
 intents.message_content = True
-bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
+bot = Bot(command_prefix="!", intents=intents, help_command=None)
 db = None
 textGenModels = ["gpt3", "gpt4", "alpaca_7b"]
 imageGenModels = ["prodia"]
@@ -18,7 +19,7 @@ imageGenModels = ["prodia"]
 async def on_ready():
     print(f"\033[1;94m INFO \033[0m| {bot.user.name} has connected to Discord.")
     global db
-    db = await aiosqlite.connect("database.db")
+    db = await connect("database.db")
     async with db.cursor() as cursor:
         await cursor.execute(
             "CREATE TABLE IF NOT EXISTS database(guilds INTEGER, channels INTEGER, models TEXT)"
@@ -73,10 +74,8 @@ async def help(interaction):
 
 
 @bot.tree.command(name="imagine", description="Generate a image based on a prompt.")
-@app_commands.describe(
-    model=f"Model to use. Choose between {', '.join(imageGenModels)}"
-)
-@app_commands.describe(prompt="Your prompt.")
+@describe(model=f"Model to use. Choose between {', '.join(imageGenModels)}")
+@describe(prompt="Your prompt.")
 async def imagine(interaction, model: str, prompt: str):
     if model.lower() not in imageGenModels:
         await interaction.response.send_message(
@@ -94,8 +93,8 @@ async def imagine(interaction, model: str, prompt: str):
 
 
 @bot.tree.command(name="ask", description="Ask a model a question.")
-@app_commands.describe(model=f"Model to use. Choose between {', '.join(textGenModels)}")
-@app_commands.describe(prompt="Your prompt.")
+@describe(model=f"Model to use. Choose between {', '.join(textGenModels)}")
+@describe(prompt="Your prompt.")
 async def ask(interaction, model: str, prompt: str):
     if model.lower() not in textGenModels:
         await interaction.response.send_message(
@@ -116,9 +115,9 @@ async def ask(interaction, model: str, prompt: str):
 
 
 @bot.tree.command(name="setup", description="Setup the chatbot.")
-@app_commands.checks.has_permissions(manage_channels=True)
-@app_commands.checks.bot_has_permissions(manage_channels=True)
-@app_commands.describe(model=f"Model to use. Choose between {', '.join(textGenModels)}")
+@checks.has_permissions(manage_channels=True)
+@checks.bot_has_permissions(manage_channels=True)
+@describe(model=f"Model to use. Choose between {', '.join(textGenModels)}")
 async def setup(interaction, model: str):
     if model.lower() not in textGenModels:
         await interaction.response.send_message(
@@ -161,20 +160,20 @@ async def setup(interaction, model: str):
 
 
 @setup.error
-async def setup_err(interaction, err):
-    if isinstance(err, app_commands.errors.BotMissingPermissions):
+async def setup_err(interaction, error):
+    if isinstance(error, errors.BotMissingPermissions):
         await interaction.response.send_message(
             "**Error:** I don't have the required permission to use this command."
         )
-    elif isinstance(err, app_commands.errors.MissingPermissions):
+    elif isinstance(error, errors.MissingPermissions):
         await interaction.response.send_message(
             "**Error:** You don't have the required permission to use this command."
         )
 
 
 @bot.tree.command(name="reset", description="Reset the chatbot.")
-@app_commands.checks.has_permissions(manage_channels=True)
-@app_commands.checks.bot_has_permissions(manage_channels=True)
+@checks.has_permissions(manage_channels=True)
+@checks.bot_has_permissions(manage_channels=True)
 async def reset(interaction):
     cursor = await db.execute(
         "SELECT channels, models FROM database WHERE guilds = ?",
@@ -199,12 +198,12 @@ async def reset(interaction):
 
 
 @reset.error
-async def reset_err(interaction, err):
-    if isinstance(err, app_commands.errors.BotMissingPermissions):
+async def reset_err(interaction, error):
+    if isinstance(error, errors.BotMissingPermissions):
         await interaction.response.send_message(
             "**Error:** I don't have the required permission to use this command."
         )
-    elif isinstance(err, app_commands.errors.MissingPermissions):
+    elif isinstance(error, errors.MissingPermissions):
         await interaction.response.send_message(
             "**Error:** You don't have the required permission to use this command."
         )
