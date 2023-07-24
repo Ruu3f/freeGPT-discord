@@ -246,5 +246,6 @@ async def on_guild_remove(guild):
     await db.commit()
 
 
-TOKEN = ""
-run(bot.run(TOKEN))
+if __name__ == "__main__":
+    TOKEN = ""
+    run(bot.run(TOKEN))
