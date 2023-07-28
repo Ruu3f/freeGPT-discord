@@ -1,7 +1,7 @@
 ##### The freeGPT bot has been verified, invite it [here](https://dsc.gg/freegpt)!
 # freeGPT-discord-bot
 
-A Discord chatbot powered by freeGPT.
+Discord chatbot and image generator powered by freeGPT.
 
 ## Support this repository:
 
