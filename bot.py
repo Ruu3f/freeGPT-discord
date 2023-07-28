@@ -4,8 +4,14 @@ from aiosqlite import connect
 from asyncio import sleep, run
 from discord.ui import Button, View
 from discord.ext.commands import Bot
-from discord.app_commands import describe, checks, errors
-from discord import Intents, Embed, File, Status, Activity, ActivityType
+from discord import Intents, Embed, File, Status, Activity, ActivityType, Colour
+from discord.app_commands import (
+    describe,
+    checks,
+    BotMissingPermissions,
+    MissingPermissions,
+    CommandOnCooldown,
+)
 
 intents = Intents.default()
 intents.message_content = True
@@ -17,7 +23,7 @@ imageGenModels = ["prodia", "pollinations"]
 
 @bot.event
 async def on_ready():
-    print(f"\033[1;94m INFO \033[0m| {bot.user.name} has connected to Discord.")
+    print(f"\033[1;94m INFO \033[0m| {bot.user} has connected to Discord.")
     global db
     db = await connect("database.db")
     async with db.cursor() as cursor:
@@ -42,15 +48,20 @@ async def on_ready():
 async def help(interaction):
     embed = Embed(
         title="Help Menu",
-        description=f"Available models: `{', '.join(textCompModels)}`",
         color=0x00FFFF,
     )
+
     embed.add_field(
-        name="setup",
-        value="Usage: `/setup {model}`",
+        name="Available models:",
+        value=f"Text Completion: `{', '.join(textCompModels)}`\nImage Generation: `{', '.join(imageGenModels)}`",
+        inline=False,
     )
-    embed.add_field(name="reset", value="Usage: `/reset`")
-    embed.set_footer(text="Powered by github.com/Ruu3f/freeGPT")
+
+    embed.add_field(
+        name="Chatbot",
+        value="`/chatbot setup` Setup the chatbot.\n`/chatbot reset` Reset the chatbot.",
+        inline=False,
+    )
     view = View()
     view.add_item(
         Button(
@@ -114,11 +125,11 @@ async def ask(interaction, model: str, prompt: str):
         await interaction.followup.send(str(e))
 
 
-@bot.tree.command(name="setup", description="Setup the chatbot.")
+@bot.tree.command(name="setup-chatbot", description="Setup the chatbot.")
 @checks.has_permissions(manage_channels=True)
 @checks.bot_has_permissions(manage_channels=True)
 @describe(model=f"Model to use. Choose between {', '.join(textCompModels)}")
-async def setup(interaction, model: str):
+async def setup_chatbot(interaction, model: str):
     if model.lower() not in textCompModels:
         await interaction.response.send_message(
             f"**Error:** Model not found! Choose a model between `{', '.join(textCompModels)}`."
@@ -132,7 +143,7 @@ async def setup(interaction, model: str):
     data = await cursor.fetchone()
     if data:
         await interaction.response.send_message(
-            "**Error:** The chatbot is already set up. Use the `/reset` command to fix this error."
+            "**Error:** The chatbot is already set up. Use the `/reset-chatbot` command to fix this error."
         )
         return
 
@@ -159,22 +170,10 @@ async def setup(interaction, model: str):
         )
 
 
-@setup.error
-async def setup_err(interaction, error):
-    if isinstance(error, errors.BotMissingPermissions):
-        await interaction.response.send_message(
-            "**Error:** I don't have the required permission to use this command."
-        )
-    elif isinstance(error, errors.MissingPermissions):
-        await interaction.response.send_message(
-            "**Error:** You don't have the required permission to use this command."
-        )
-
-
-@bot.tree.command(name="reset", description="Reset the chatbot.")
+@bot.tree.command(name="reset-chatbot", description="Reset the chatbot.")
 @checks.has_permissions(manage_channels=True)
 @checks.bot_has_permissions(manage_channels=True)
-async def reset(interaction):
+async def reset_chatbot(interaction):
     cursor = await db.execute(
         "SELECT channels, models FROM database WHERE guilds = ?",
         (interaction.guild.id,),
@@ -193,19 +192,7 @@ async def reset(interaction):
 
     else:
         await interaction.response.send_message(
-            "**Error:** The chatbot is not set up. Use the `/setup` command to fix this error."
-        )
-
-
-@reset.error
-async def reset_err(interaction, error):
-    if isinstance(error, errors.BotMissingPermissions):
-        await interaction.response.send_message(
-            "**Error:** I don't have the required permission to use this command."
-        )
-    elif isinstance(error, errors.MissingPermissions):
-        await interaction.response.send_message(
-            "**Error:** You don't have the required permission to use this command."
+            "**Error:** The chatbot is not set up. Use the `/setup-chatbot` command to fix this error."
         )
 
 
@@ -238,6 +225,41 @@ async def on_message(message):
 
                     except Exception as e:
                         await message.reply(str(e))
+
+
+@bot.tree.error
+async def on_app_command_error(interaction, error):
+    if isinstance(error, CommandOnCooldown):
+        embed = Embed(
+            description=f"This command is on cooldown, try again in {error.retry_after:.2f} seconds.",
+            colour=Colour.gray(),
+        )
+        await interaction.response.send_message(embed=embed)
+    elif isinstance(error, MissingPermissions):
+        embed = Embed(
+            description=f"**Error:** You are missing the `{error.missing_permissions[0]}` permission to run this command.",
+            colour=Colour.red(),
+        )
+    elif isinstance(error, BotMissingPermissions):
+        embed = Embed(
+            description=f"**Error:** I am missing the `{error.missing_permissions[0]}` permission to run this command.",
+            colour=Colour.red(),
+        )
+        await interaction.response.send_message(embed=embed)
+    else:
+        embed = Embed(
+            title="An error occurred:",
+            description=error,
+            color=Colour.red(),
+        )
+        view = View()
+        view.add_item(
+            Button(
+                label="Report this error",
+                url="https://discord.gg/XH6pUGkwRr",
+            )
+        )
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 
 @bot.event
