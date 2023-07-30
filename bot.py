@@ -209,6 +209,14 @@ async def on_message(message):
         if data:
             channel_id, model = data
             if message.channel.id == channel_id:
+                if (
+                    "@everyone" in message.content
+                    or "@here" in message.content
+                    or "<@" in message.content
+                    and ">" in message.content
+                ):
+                    await message.reply("Sorry, I am not allowed to mention anyone.")
+                    return
                 await message.channel.edit(slowmode_delay=15)
                 async with message.channel.typing():
                     try:
