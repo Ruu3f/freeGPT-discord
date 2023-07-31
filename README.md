@@ -1,14 +1,11 @@
-##### The freeGPT bot has been verified, invite it [here](https://dsc.gg/freegpt)!
 # freeGPT-discord-bot
 
 Discord chatbot and image generator powered by freeGPT.
 
-## Support this repository:
-
-- Star this & [the original](https://github.com/Ruu3f/freeGPT) repository :D
-- Add the [freeGPT Discord bot](https://dsc.gg/freegpt).
-- Join my [Discord Server](https://discord.gg/XH6pUGkwRr):
-
+## **Support this repository:**
+- ⭐ **Star the project:** Show your love by giving a star to this repository and the [freeGPT repository](https://github.com/Ruu3f/freeGPT). It means a lot to me! 💕
+- 🤖 **Add the freeGPT Discord bot:** Use the freeGPT bot by adding it to your Discord servers.
+- 🎉 **Join our Discord Server:** Try the bot and chat with others. [Join here](https://discord.gg/XH6pUGkwRr):
 [![DiscordWidget](https://discordapp.com/api/guilds/1120833966035976273/widget.png?style=banner2)](https://discord.gg/XH6pUGkwRr)
 
 ## Running the code:
@@ -26,6 +23,6 @@ TOKEN = "" # Put your token in the ""
 ```
 ##### 7. Run bot.py:
 ```
-py bot.py
+python bot.py
 ```
 #### Result: Your bot should now come online and be ready to receive commands and events.
