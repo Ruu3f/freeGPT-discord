@@ -2,7 +2,7 @@
 
 Discord chatbot and image generator powered by freeGPT.
 
-## **Support this repository:**
+## Support this repository:
 - ⭐ **Star the project:** Show your love by giving a star to this repository and the [freeGPT repository](https://github.com/Ruu3f/freeGPT). It means a lot to me! 💕
 - 🤖 **Add the freeGPT Discord bot:** Use the freeGPT bot by adding it to your Discord servers.
 - 🎉 **Join our Discord Server:** Try the bot and chat with others. [Join here](https://discord.gg/XH6pUGkwRr):
