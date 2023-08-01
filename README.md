@@ -18,12 +18,12 @@ pip install -r requirements.txt
 ```
 ##### 4. Go to the [Discord Developer Portal](https://discord.com/developers) and create a new application. Give it a name and click "Create".
 ##### 5. Navigate to the "Bot" tab and click "Add Bot". Enable all intents then finally press "Save Changes".
-##### 6. Copy the bot token and go to the .env file:
+##### 6. Copy the bot token, go to bot.py and go to the end of the code, put your bot token here:
 ```python
-TOKEN=yourBotToken # Replace yourBotToken with your bot token
+TOKEN = "" # Put your bot token inside the quotes
 ```
 ##### 7. Run bot.py:
 ```
 python bot.py
 ```
-#### Result: Your bot should now come online and be ready to receive commands and events.
+#### Result: A instance of the bot should start running with all the slash commands.
