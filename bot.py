@@ -201,6 +201,7 @@ async def reset_chatbot(interaction):
 async def on_message(message):
     if message.author == bot.user:
         return
+
     if db:
         cursor = await db.execute(
             "SELECT channels, models FROM database WHERE guilds = ?",
@@ -210,27 +211,30 @@ async def on_message(message):
         if data:
             channel_id, model = data
             if message.channel.id == channel_id:
-                if (
-                    "@everyone" in message.content
-                    or "@here" in message.content
-                    or "<@" in message.content
-                    and ">" in message.content
-                ):
-                    await message.reply("Sorry, I am not allowed to mention anyone.")
-                    return
                 await message.channel.edit(slowmode_delay=15)
                 async with message.channel.typing():
                     try:
                         resp = await getattr(freeGPT, model.lower()).Completion.create(
                             prompt=message.content
                         )
+                        if (
+                            "@everyone" in resp
+                            or "@here" in resp
+                            or "<@" in resp
+                            and ">" in resp
+                        ):
+                            resp = (
+                                resp.replace("@everyone", "@ everyone")
+                                .replace("@here", "@ here")
+                                .replace("<@", "<@ ")
+                            )
                         if len(resp) <= 2000:
                             await message.reply(resp)
                         else:
-                            resp = File(
+                            resp_file = File(
                                 fp=BytesIO(resp.encode("utf-8")), filename="message.txt"
                             )
-                            await message.reply(file=resp)
+                            await message.reply(file=resp_file)
 
                     except Exception as e:
                         await message.reply(str(e))
@@ -278,4 +282,5 @@ async def on_guild_remove(guild):
 
 
 if __name__ == "__main__":
-    run(bot.run(os.getenv("TOKEN")))
+    TOKEN = os.getenv("TOKEN")
+    run(bot.run(TOKEN))
