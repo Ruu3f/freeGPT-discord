@@ -1,4 +1,3 @@
-import os
 import freeGPT
 from io import BytesIO
 from aiosqlite import connect
@@ -282,5 +281,5 @@ async def on_guild_remove(guild):
 
 
 if __name__ == "__main__":
-    TOKEN = os.getenv("TOKEN")
+    TOKEN = ""
     run(bot.run(TOKEN))
