@@ -95,7 +95,7 @@ async def imagine(interaction, model: str, prompt: str):
         return
     try:
         await interaction.response.defer()
-        resp = await getattr(freeGPT, model.lower()).Generation.create(prompt=prompt)
+        resp = await getattr(freeGPT, model.lower()).Generation().create(prompt=prompt)
         file = File(fp=BytesIO(resp), filename="image.png")
         await interaction.followup.send(file=file)
 
@@ -213,7 +213,7 @@ async def on_message(message):
                 await message.channel.edit(slowmode_delay=15)
                 async with message.channel.typing():
                     try:
-                        resp = await getattr(freeGPT, model.lower()).Completion.create(
+                        resp = await getattr(freeGPT, model.lower()).Completion().create(
                             prompt=message.content
                         )
                         if (
