@@ -1,3 +1,4 @@
+import os
 import freeGPT
 from io import BytesIO
 from aiosqlite import connect
@@ -114,7 +115,7 @@ async def ask(interaction, model: str, prompt: str):
         return
     try:
         await interaction.response.defer()
-        resp = await getattr(freeGPT, model.lower()).Completion.create(prompt=prompt)
+        resp = await getattr(freeGPT, model.lower()).Completion().create(prompt=prompt)
         if len(resp) <= 2000:
             await interaction.followup.send(resp)
         else:
