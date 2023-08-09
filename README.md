@@ -1,4 +1,4 @@
-# freeGPT-discord-bot
+# freeGPT-discord
 
 Discord chatbot and image generator powered by freeGPT.
 
