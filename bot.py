@@ -1,4 +1,3 @@
-import os
 import freeGPT
 from io import BytesIO
 from aiosqlite import connect
