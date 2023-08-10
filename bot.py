@@ -73,7 +73,7 @@ async def help(interaction):
     view.add_item(
         Button(
             label="Server",
-            url="https://discord.gg/XH6pUGkwRr",
+            url="https://discord.com/invite/UxJZMUqbsb",
         )
     )
     view.add_item(
@@ -269,7 +269,7 @@ async def on_app_command_error(interaction, error):
         view.add_item(
             Button(
                 label="Report this error",
-                url="https://discord.gg/XH6pUGkwRr",
+                url="https://discord.com/invite/UxJZMUqbsb",
             )
         )
         await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
