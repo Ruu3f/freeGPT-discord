@@ -50,35 +50,35 @@ async def help(interaction):
         title="Help Menu",
         color=0x00FFFF,
     )
-
+    embed.set_thumbnail(url=bot.user.avatar.url)
     embed.add_field(
-        name="Available models:",
-        value=f"Text Completion: `{', '.join(textCompModels)}`\nImage Generation: `{', '.join(imageGenModels)}`",
+        name="Models:",
+        value=f"**Text Completion:** `{', '.join(textCompModels)}`\n**Image Generation:** `{', '.join(imageGenModels)}`",
         inline=False,
     )
 
     embed.add_field(
         name="Chatbot",
-        value="`/chatbot setup` Setup the chatbot.\n`/chatbot reset` Reset the chatbot.",
+        value="Setup the chatbot: `/setup-chatbot`.\nReset the chatbot: `/reset-chatbot`.",
         inline=False,
     )
     view = View()
     view.add_item(
         Button(
-            label="Invite",
-            url="https://dsc.gg/freeGPT",
+            label="Invite Me",
+            url="https://dsc.gg/freeGPT-discord",
         )
     )
     view.add_item(
         Button(
-            label="Server",
+            label="Support Server",
             url="https://discord.com/invite/UxJZMUqbsb",
         )
     )
     view.add_item(
         Button(
             label="Source",
-            url="https://github.com/Ruu3f/freeGPT-discord-bot",
+            url="https://github.com/Ruu3f/freeGPT-discord",
         )
     )
     await interaction.response.send_message(embed=embed, view=view)
@@ -96,8 +96,11 @@ async def imagine(interaction, model: str, prompt: str):
     try:
         await interaction.response.defer()
         resp = await getattr(freeGPT, model.lower()).Generation().create(prompt=prompt)
-        file = File(fp=BytesIO(resp), filename="image.png")
-        await interaction.followup.send(file=file)
+        file = File(fp=BytesIO(resp), filename="image.png", spoiler=True)
+        await interaction.followup.send(
+            "**Generated image might be NSFW!** Click the spoiler at your own risk.",
+            file=file,
+        )
 
     except Exception as e:
         await interaction.followup.send(str(e))
@@ -213,8 +216,10 @@ async def on_message(message):
                 await message.channel.edit(slowmode_delay=15)
                 async with message.channel.typing():
                     try:
-                        resp = await getattr(freeGPT, model.lower()).Completion().create(
-                            prompt=message.content
+                        resp = (
+                            await getattr(freeGPT, model.lower())
+                            .Completion()
+                            .create(prompt=message.content)
                         )
                         if (
                             "@everyone" in resp
@@ -281,5 +286,5 @@ async def on_guild_remove(guild):
 
 
 if __name__ == "__main__":
-    TOKEN = ""
+    TOKEN = "MTEzODgyNjEzMDIzMzc2NTk5OA.GW_uxJ.Rupw9bpb9xBL5_csGZwU1DMb2YQsxXV2Q_6aB0"
     run(bot.run(TOKEN))
