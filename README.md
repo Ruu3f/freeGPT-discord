@@ -5,9 +5,9 @@ Discord chatbot and image generator powered by freeGPT.
 ## Support this repository:
 - ⭐ **Star the project:** Star this and the [freeGPT repository](https://github.com/Ruu3f/freeGPT). It means a lot to me! 💕
 - 🤖 **Add the freeGPT Discord bot:** Use the freeGPT bot by adding it to your Discord servers.
-- 🎉 **Join my Discord Server:** Try the bot and chat with others. [Join here](https://discord.com/invite/UxJZMUqbsb):
+- 🎉 **Join my Discord Server:** Try the bot and chat with others. [Join here](https://dsc.gg/devhub-rsgh):
 
-[![DiscordWidget](https://discordapp.com/api/guilds/1137347499414278204/widget.png?style=banner2)](https://discord.com/invite/UxJZMUqbsb)
+[![DiscordWidget](https://discordapp.com/api/guilds/1137347499414278204/widget.png?style=banner2)](https://dsc.gg/devhub-rsgh)
 
 ## Running the code:
 ##### 1. Download the code and extract it, and create a discord account if you still haven't.
