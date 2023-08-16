@@ -17,7 +17,7 @@ intents = Intents.default()
 intents.message_content = True
 bot = Bot(command_prefix="!", intents=intents, help_command=None)
 db = None
-textCompModels = ["gpt3", "gpt4", "alpaca_7b"]
+textCompModels = ["gpt3", "gpt4", "alpaca_7b", "falcon_40b"]
 imageGenModels = ["prodia", "pollinations"]
 
 
