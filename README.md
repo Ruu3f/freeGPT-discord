@@ -12,21 +12,17 @@ Discord chatbot and image generator powered by freeGPT.
 
 1. **Download the Source Code:** Start by downloading the bot's source code.
 
-2. **Install Python:** If Python is not already installed on your system, you can download it from [python.org](https://www.python.org/downloads/).
-
-3. **Install Dependencies:** Open your terminal and run:
+2. **Install Dependencies:** Open your terminal and run:
 ```pip install -r requirements.txt```
 
-4. **Bot Setup:**
+3. **Application Setup:**
     - Create a new application on the [Discord Developer Portal](https://discord.com/developers).
-    - Within your application's settings, create a new bot and enable the `message content` intent.
+    - In the app's settings, enable the `message content` intent and copy the token.
 
-5. **Add Your Bot Token:** Copy your bot token and paste it into the `bot.py` file:
+4. **Add Your Bot Token:** Paste the copied token in bot.py:
   ```python
-  TOKEN = ""  # Paste your bot token inside the quotes
+  TOKEN = "yourBotToken"
   ```
 
-6. **Run the Bot:** In your terminal, execute the following command to run the bot:
+5. **Run the Bot:** Open your terminal and run:
 ```python bot.py```
-
-Following these steps will set up and run your bot successfully.
