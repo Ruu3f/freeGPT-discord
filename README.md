@@ -19,10 +19,13 @@ Discord chatbot and image generator powered by freeGPT.
     - Create a new application on the [Discord Developer Portal](https://discord.com/developers).
     - In the app's settings, enable the `message content` intent and copy the token.
 
-4. **Add Your Bot Token:** Paste the copied token in bot.py:
+4. **Get your Huggingface token:** Go to [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens) and create a token with 'Read' role and copy it.
+
+5. **Add Your Bot Token and Huggingface Token:** Paste the copied tokens in bot.py:
   ```python
+  HF_TOKEN = "yourHuggingFaceToken"
   TOKEN = "yourBotToken"
   ```
 
-5. **Run the Bot:** Open your terminal and run:
+6. **Run the Bot:** Open your terminal and run:
 ```python bot.py```
