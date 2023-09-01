@@ -1,9 +1,11 @@
 import freeGPT
+from os import remove
 from io import BytesIO
 from aiosqlite import connect
 from asyncio import sleep, run
 from discord.ui import Button, View
 from discord.ext.commands import Bot
+from aiohttp import ClientSession, ClientError
 from discord import Intents, Embed, File, Status, Activity, ActivityType, Colour
 from discord.app_commands import (
     describe,
@@ -12,6 +14,35 @@ from discord.app_commands import (
     MissingPermissions,
     CommandOnCooldown,
 )
+
+
+class ImageDescriptor:
+    def __init__(self, hf_token):
+        self.hf_token = hf_token
+
+    async def generate(self, image_url):
+        temp_image = "temp_image.jpg"
+        async with ClientSession() as session:
+            async with session.get(image_url) as image:
+                image_content = await image.read()
+            with open(temp_image, "wb") as f:
+                f.write(image_content)
+            try:
+                with open(temp_image, "rb") as f:
+                    data = f.read()
+            finally:
+                remove(temp_image)
+            async with session.post(
+                "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large",
+                data=data,
+                headers={"Authorization": f"Bearer {self.hf_token}"},
+                timeout=30,
+            ) as resp:
+                resp_json = await resp.json()
+                if resp.status != 200:
+                    raise ClientError("Unable to fetch the response.")
+                return resp_json[0]["generated_text"]
+
 
 intents = Intents.default()
 intents.message_content = True
@@ -42,6 +73,47 @@ async def on_ready():
             ),
         )
         await sleep(300)
+
+
+@bot.event
+async def on_guild_remove(guild):
+    await db.execute("DELETE FROM database WHERE guilds = ?", (guild.id,))
+    await db.commit()
+
+
+@bot.tree.error
+async def on_app_command_error(interaction, error):
+    if isinstance(error, CommandOnCooldown):
+        embed = Embed(
+            description=f"This command is on cooldown, try again in {error.retry_after:.2f} seconds.",
+            colour=Colour.red(),
+        )
+        await interaction.response.send_message(embed=embed)
+    elif isinstance(error, MissingPermissions):
+        embed = Embed(
+            description=f"**Error:** You are missing the `{error.missing_permissions[0]}` permission to run this command.",
+            colour=Colour.red(),
+        )
+    elif isinstance(error, BotMissingPermissions):
+        embed = Embed(
+            description=f"**Error:** I am missing the `{error.missing_permissions[0]}` permission to run this command.",
+            colour=Colour.red(),
+        )
+        await interaction.response.send_message(embed=embed)
+    else:
+        embed = Embed(
+            title="An error occurred:",
+            description=error,
+            color=Colour.red(),
+        )
+        view = View()
+        view.add_item(
+            Button(
+                label="Report this error",
+                url="https://discord.com/invite/UxJZMUqbsb",
+            )
+        )
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
 
 
 @bot.tree.command(name="help", description="Get help.")
@@ -209,6 +281,7 @@ async def on_message(message):
             "SELECT channels, models FROM database WHERE guilds = ?",
             (message.guild.id,),
         )
+
         data = await cursor.fetchone()
         if data:
             channel_id, model = data
@@ -216,11 +289,26 @@ async def on_message(message):
                 await message.channel.edit(slowmode_delay=15)
                 async with message.channel.typing():
                     try:
-                        resp = (
-                            await getattr(freeGPT, model.lower())
-                            .Completion()
-                            .create(prompt=message.content)
-                        )
+                        if message.attachments and message.attachments[0].url.endswith(
+                            ".png"
+                        ):
+                            imagedescription = ImageDescriptor(HF_TOKEN)
+                            description = await imagedescription.generate(
+                                message.attachments[0].url
+                            )
+                            resp = (
+                                await getattr(freeGPT, model.lower())
+                                .Completion()
+                                .create(
+                                    prompt=f"Image detected, description: {description}. Prompt: {message.content}"
+                                )
+                            )
+                        else:
+                            resp = (
+                                await getattr(freeGPT, model.lower())
+                                .Completion()
+                                .create(prompt=message.content)
+                            )
                         if (
                             "@everyone" in resp
                             or "@here" in resp
@@ -244,47 +332,7 @@ async def on_message(message):
                         await message.reply(str(e))
 
 
-@bot.tree.error
-async def on_app_command_error(interaction, error):
-    if isinstance(error, CommandOnCooldown):
-        embed = Embed(
-            description=f"This command is on cooldown, try again in {error.retry_after:.2f} seconds.",
-            colour=Colour.gray(),
-        )
-        await interaction.response.send_message(embed=embed)
-    elif isinstance(error, MissingPermissions):
-        embed = Embed(
-            description=f"**Error:** You are missing the `{error.missing_permissions[0]}` permission to run this command.",
-            colour=Colour.red(),
-        )
-    elif isinstance(error, BotMissingPermissions):
-        embed = Embed(
-            description=f"**Error:** I am missing the `{error.missing_permissions[0]}` permission to run this command.",
-            colour=Colour.red(),
-        )
-        await interaction.response.send_message(embed=embed)
-    else:
-        embed = Embed(
-            title="An error occurred:",
-            description=error,
-            color=Colour.red(),
-        )
-        view = View()
-        view.add_item(
-            Button(
-                label="Report this error",
-                url="https://discord.com/invite/UxJZMUqbsb",
-            )
-        )
-        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
-
-
-@bot.event
-async def on_guild_remove(guild):
-    await db.execute("DELETE FROM database WHERE guilds = ?", (guild.id,))
-    await db.commit()
-
-
 if __name__ == "__main__":
+    HF_TOKEN = ""
     TOKEN = ""
     run(bot.run(TOKEN))
