@@ -1,9 +1,9 @@
-import freeGPT
 from os import remove
 from json import load
 from io import BytesIO
 from aiosqlite import connect
 from asyncio import sleep, run
+from freeGPT import AsyncClient
 from discord.ui import Button, View
 from discord.ext.commands import Bot
 from aiohttp import ClientSession, ClientError
@@ -139,7 +139,7 @@ async def imagine(interaction, model: str, prompt: str):
         return
     try:
         await interaction.response.defer()
-        resp = await getattr(freeGPT, model.lower()).Generation().create(prompt=prompt)
+        resp = await AsyncClient.create_generation(model, prompt)
         file = File(fp=BytesIO(resp), filename="image.png", spoiler=True)
         await interaction.followup.send(
             "**Generated image might be NSFW!** Click the spoiler at your own risk.",
@@ -161,7 +161,7 @@ async def ask(interaction, model: str, prompt: str):
         return
     try:
         await interaction.response.defer()
-        resp = await getattr(freeGPT, model.lower()).Completion().create(prompt=prompt)
+        resp = await AsyncClient.create_completion(model, prompt)
         if len(resp) <= 2000:
             await interaction.followup.send(resp)
         else:
@@ -285,18 +285,13 @@ async def on_message(message):
                                         raise ClientError(
                                             "Unable to fetch the response."
                                         )
-                                    resp = (
-                                        await getattr(freeGPT, model.lower())
-                                        .Completion()
-                                        .create(
-                                            prompt=f"Image detected, description: {resp_json[0]['generated_text']}. Prompt: {message.content}"
-                                        )
+                                    resp = await AsyncClient.create_completion(
+                                        model,
+                                        f"Image detected, description: {resp_json[0]['generated_text']}. Prompt: {message.content}",
                                     )
                     else:
-                        resp = (
-                            await getattr(freeGPT, model.lower())
-                            .Completion()
-                            .create(prompt=message.content)
+                        resp = await AsyncClient.create_completion(
+                            model, message.content
                         )
                         if (
                             "@everyone" in resp
