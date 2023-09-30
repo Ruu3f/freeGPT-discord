@@ -16,35 +16,6 @@ from discord.app_commands import (
     CommandOnCooldown,
 )
 
-
-class ImageCaption:
-    def __init__(self, hf_token):
-        self.hf_token = hf_token
-
-    async def generate(self, image_url):
-        temp_image = "temp_image.jpg"
-        async with ClientSession() as session:
-            async with session.get(image_url) as image:
-                image_content = await image.read()
-            with open(temp_image, "wb") as f:
-                f.write(image_content)
-            try:
-                with open(temp_image, "rb") as f:
-                    data = f.read()
-            finally:
-                remove(temp_image)
-            async with session.post(
-                "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large",
-                data=data,
-                headers={"Authorization": f"Bearer {self.hf_token}"},
-                timeout=20,
-            ) as resp:
-                resp_json = await resp.json()
-                if resp.status != 200:
-                    raise ClientError("Unable to fetch the response.")
-                return resp_json[0]["generated_text"]
-
-
 intents = Intents.default()
 intents.message_content = True
 bot = Bot(command_prefix="!", intents=intents, help_command=None)
@@ -123,7 +94,7 @@ async def help(interaction):
         title="Help Menu",
         color=0x00FFFF,
     )
-    embed.set_thumbnail(url=bot.user.avatar.url)
+
     embed.add_field(
         name="Models:",
         value=f"**Text Completion:** `{', '.join(textCompModels)}`\n**Image Generation:** `{', '.join(imageGenModels)}`",
@@ -289,27 +260,44 @@ async def on_message(message):
             if message.channel.id == channel_id:
                 await message.channel.edit(slowmode_delay=15)
                 async with message.channel.typing():
-                    try:
-                        if message.attachments and message.attachments[0].url.endswith(
-                            ".png"
-                        ):
-                            imagecaption = ImageCaption(HF_TOKEN)
-                            description = await imagecaption.generate(
-                                message.attachments[0].url
-                            )
-                            resp = (
-                                await getattr(freeGPT, model.lower())
-                                .Completion()
-                                .create(
-                                    prompt=f"Image detected, description: {description}. Prompt: {message.content}"
-                                )
-                            )
-                        else:
-                            resp = (
-                                await getattr(freeGPT, model.lower())
-                                .Completion()
-                                .create(prompt=message.content)
-                            )
+                    if message.attachments and message.attachments[0].url.endswith(
+                        ".png"
+                    ):
+                        temp_image = "temp_image.jpg"
+                        async with ClientSession() as session:
+                            async with session.get(message.attachments[0].url) as image:
+                                image_content = await image.read()
+                                with open(temp_image, "wb") as file:
+                                    file.write(image_content)
+                                try:
+                                    with open(temp_image, "rb") as file:
+                                        data = file.read()
+                                finally:
+                                    remove(temp_image)
+                                async with session.post(
+                                    "https://api-inference.huggingface.co/models/Salesforce/blip-image-captioning-large",
+                                    data=data,
+                                    headers={"Authorization": f"Bearer {HF_TOKEN}"},
+                                    timeout=20,
+                                ) as resp:
+                                    resp_json = await resp.json()
+                                    if resp.status != 200:
+                                        raise ClientError(
+                                            "Unable to fetch the response."
+                                        )
+                                    resp = (
+                                        await getattr(freeGPT, model.lower())
+                                        .Completion()
+                                        .create(
+                                            prompt=f"Image detected, description: {resp_json[0]['generated_text']}. Prompt: {message.content}"
+                                        )
+                                    )
+                    else:
+                        resp = (
+                            await getattr(freeGPT, model.lower())
+                            .Completion()
+                            .create(prompt=message.content)
+                        )
                         if (
                             "@everyone" in resp
                             or "@here" in resp
@@ -317,24 +305,24 @@ async def on_message(message):
                             and ">" in resp
                         ):
                             resp = (
-                                resp.replace("@everyone", "@ everyone")
-                                .replace("@here", "@ here")
-                                .replace("<@", "<@ ")
+                                resp.replace("@everyone", "@|everyone")
+                                .replace("@here", "@|here")
+                                .replace("<@", "<@|")
                             )
                         if len(resp) <= 2000:
-                            await message.reply(resp)
+                            await message.reply(resp, mention_author=False)
                         else:
-                            resp_file = File(
-                                fp=BytesIO(resp.encode("utf-8")), filename="message.txt"
+                            await message.reply(
+                                file=File(
+                                    fp=BytesIO(resp.encode("utf-8")),
+                                    filename="message.txt",
+                                ),
+                                mention_author=False,
                             )
-                            await message.reply(file=resp_file)
-
-                    except Exception as e:
-                        await message.reply(str(e))
 
 
 if __name__ == "__main__":
-    with open("config.json", "r") as f:
-        data = load(f)
+    with open("config.json", "r") as file:
+        data = load(file)
     HF_TOKEN = data["HF_TOKEN"]
     run(bot.run(data["BOT_TOKEN"]))
