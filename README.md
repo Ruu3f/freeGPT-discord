@@ -4,9 +4,6 @@ Discord chatbot and image generator powered by freeGPT.
 
 ## Support this repository:
 - ⭐ **Star the project:** Star this and the [freeGPT repository](https://github.com/Ruu3f/freeGPT). It means a lot to me! 💕
-- 🎉 **Join my Discord Server:** Chat with me and others. [Join here](https://dsc.gg/devhub-rsgh):
-
-[![DiscordWidget](https://discordapp.com/api/guilds/1137347499414278204/widget.png?style=banner2)](https://dsc.gg/devhub-rsgh)
 
 ## Getting Started:
 
